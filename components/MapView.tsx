@@ -18,12 +18,10 @@ interface MapViewProps {
   center?: { lat: number; lng: number };
 }
 
-// Component to handle map view updates when data changes or marker is clicked
 const MapController = ({ center, businesses }: { center: [number, number], businesses: Business[] }) => {
   const map = useMap();
   
   useEffect(() => {
-    // Ensure map takes up full container space
     const timeout = setTimeout(() => {
       map.invalidateSize();
       if (center[0] !== 0) {
@@ -35,8 +33,7 @@ const MapController = ({ center, businesses }: { center: [number, number], busin
   }, [center, map]);
 
   useEffect(() => {
-    // Auto-fit bounds only on initial data load if no specific center is targeted
-    if (businesses.length > 1 && center[0] === 0) {
+    if (businesses.length > 0 && center[0] === 0) {
       const validPoints = businesses
         .filter(b => b.location && b.location.lat !== 0)
         .map(b => [b.location.lat, b.location.lng] as L.LatLngExpression);
@@ -104,24 +101,53 @@ export const MapView: React.FC<MapViewProps> = ({ businesses, center }) => {
               }}
             >
               <Popup className="custom-popup">
-                <div className="p-2 min-w-[200px]">
-                  <div className="flex justify-between items-start mb-1">
-                    <h4 className="font-bold text-slate-900 leading-tight">{biz.name}</h4>
-                    <span className="bg-blue-100 text-blue-700 text-[9px] font-black px-1.5 py-0.5 rounded uppercase">{biz.industry}</span>
+                <div className="p-2 min-w-[220px]">
+                  <div className="flex justify-between items-start mb-1 gap-2">
+                    <h4 className="font-bold text-slate-900 leading-tight text-sm">{biz.name}</h4>
+                    <span className="bg-blue-100 text-blue-700 text-[8px] font-black px-1.5 py-0.5 rounded uppercase flex-shrink-0">{biz.industry}</span>
                   </div>
+                  
                   <div className="flex items-center text-yellow-500 mb-2">
                     <span className="text-xs font-bold mr-1">{biz.rating || 'N/A'}</span>
                     <svg className="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                   </div>
-                  <p className="text-[11px] text-slate-600 line-clamp-2 mb-3">{biz.address}</p>
-                  <a 
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(biz.name + ' ' + biz.address)}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="block w-full text-center text-[10px] bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-100"
-                  >
-                    Get Directions
-                  </a>
+
+                  <div className="space-y-1 mb-3">
+                    {biz.phone && (
+                      <p className="text-[10px] text-slate-700 flex items-center gap-1.5 font-medium">
+                        <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                        {biz.phone}
+                      </p>
+                    )}
+                    {biz.contactPerson && (
+                      <p className="text-[10px] text-indigo-600 flex items-center gap-1.5 font-bold">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        {biz.contactPerson.name} ({biz.contactPerson.role})
+                      </p>
+                    )}
+                    <p className="text-[9px] text-slate-500 italic leading-tight">{biz.address}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <a 
+                      href={biz.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-center text-[10px] bg-blue-600 text-white py-1.5 rounded-lg font-bold hover:bg-blue-700 transition-all shadow-sm"
+                    >
+                      Directions
+                    </a>
+                    {biz.website && (
+                      <a 
+                        href={biz.website.startsWith('http') ? biz.website : `https://${biz.website}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-center text-[10px] bg-slate-100 text-slate-700 py-1.5 rounded-lg font-bold hover:bg-slate-200 transition-all shadow-sm border border-slate-200"
+                      >
+                        Website
+                      </a>
+                    )}
+                  </div>
                 </div>
               </Popup>
             </Marker>

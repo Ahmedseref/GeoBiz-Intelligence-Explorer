@@ -26,7 +26,7 @@ export const IndustryExplorer: React.FC<IndustryExplorerProps> = ({ businesses, 
   }, [businesses]);
 
   const industries = useMemo(() => Object.keys(groupedBusinesses).sort(), [groupedBusinesses]);
-  const currentBusinesses = groupedBusinesses[selectedIndustry] || [];
+  const currentBusinesses = useMemo(() => groupedBusinesses[selectedIndustry] || [], [groupedBusinesses, selectedIndustry]);
 
   return (
     <div className="space-y-6">
@@ -37,13 +37,18 @@ export const IndustryExplorer: React.FC<IndustryExplorerProps> = ({ businesses, 
             <button
               key={industry}
               onClick={() => setSelectedIndustry(industry)}
-              className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap border-2 ${
+              className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap border-2 flex items-center gap-2 ${
                 selectedIndustry === industry
                   ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200 scale-105'
                   : 'bg-slate-50 border-slate-100 text-slate-600 hover:bg-slate-100'
               }`}
             >
-              {industry} <span className={`ml-1 opacity-60 ${selectedIndustry === industry ? 'text-white' : 'text-slate-400'}`}>({groupedBusinesses[industry].length})</span>
+              {industry} 
+              <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-black ${
+                selectedIndustry === industry ? 'bg-white text-blue-600' : 'bg-slate-200 text-slate-500'
+              }`}>
+                {groupedBusinesses[industry].length}
+              </span>
             </button>
           ))}
         </div>
@@ -73,10 +78,10 @@ export const IndustryExplorer: React.FC<IndustryExplorerProps> = ({ businesses, 
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
         {viewMode === 'map' ? (
           <div className="bg-white p-3 rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
-            <MapView businesses={currentBusinesses} center={center} />
+            <MapView businesses={currentBusinesses} center={selectedIndustry === 'All' ? center : undefined} />
             <div className="px-4 py-2">
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-center">
-                Visualizing {selectedIndustry} Industry Ecosystem
+                Visualizing {selectedIndustry === 'All' ? 'Complete Market' : `${selectedIndustry} Industry`} Ecosystem
               </p>
             </div>
           </div>

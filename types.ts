@@ -9,6 +9,14 @@ export interface Business {
   location: { lat: number; lng: number };
   url?: string;
   popularityScore: number;
+  // Contact Info
+  phone?: string;
+  website?: string;
+  email?: string;
+  contactPerson?: {
+    name: string;
+    role: string;
+  };
 }
 
 export interface AnalyticsData {

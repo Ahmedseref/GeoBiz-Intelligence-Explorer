@@ -20,7 +20,8 @@ export const performSmartSearch = async (
     2. Map them to standardized industries (e.g., 'Hospitality', 'Technology', 'Retail', 'Wellness', 'Finance', 'Manufacturing').
     3. Identify multiple specific activities for each company.
     4. Provide a structured summary of the market landscape.
-    5. DATA OUTPUT: You MUST include a valid JSON array of the businesses found. 
+    5. CONTACT DETAILS: For each company, try to find their phone number, website, and an official contact person or representative if available in public records.
+    6. DATA OUTPUT: You MUST include a valid JSON array of the businesses found. 
        Wrap the JSON block between the markers [DATA_START] and [DATA_END].
        Structure for each object in the array:
        {
@@ -32,17 +33,23 @@ export const performSmartSearch = async (
          "popularityScore": number (1-100),
          "lat": number,
          "lng": number,
-         "url": string (Google Maps URL if found)
+         "url": string (Google Maps URL),
+         "phone": string (e.g., "+1-555-0199"),
+         "website": string (URL),
+         "email": string (if available),
+         "contactPerson": {
+           "name": string,
+           "role": string
+         } (optional)
        }
     
     Be extremely precise with the JSON formatting. Use current location data if provided to bias search results.
   `;
 
   try {
-    // CRITICAL FIX: Google Maps tool is ONLY supported in Gemini 2.5 series models.
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: `Perform a deep market analysis for "${query}" in "${geography || 'the local area'}". Find businesses and list their activities.`,
+      contents: `Perform a deep market analysis for "${query}" in "${geography || 'the local area'}". Find businesses and list their activities, contact info, and key personnel.`,
       config: {
         systemInstruction,
         tools: [{ googleMaps: {} }],
@@ -59,7 +66,6 @@ export const performSmartSearch = async (
 
     const fullText = response.text || "";
     
-    // Improved extraction logic looking for custom tags or markdown blocks
     let jsonString = "";
     const dataStartTag = "[DATA_START]";
     const dataEndTag = "[DATA_END]";
@@ -67,7 +73,6 @@ export const performSmartSearch = async (
     if (fullText.includes(dataStartTag) && fullText.includes(dataEndTag)) {
       jsonString = fullText.split(dataStartTag)[1].split(dataEndTag)[0].trim();
     } else {
-      // Fallback to markdown blocks
       const markdownMatch = fullText.match(/```(?:json)?\s*([\s\S]*?)```/);
       if (markdownMatch) {
         jsonString = markdownMatch[1].trim();
@@ -77,7 +82,6 @@ export const performSmartSearch = async (
     let parsedBusinesses: any[] = [];
     if (jsonString) {
       try {
-        // Find the first '[' and last ']' to isolate the array
         const startIdx = jsonString.indexOf('[');
         const endIdx = jsonString.lastIndexOf(']') + 1;
         if (startIdx !== -1 && endIdx !== -1) {
@@ -110,7 +114,6 @@ export const performSmartSearch = async (
       else ratingsMap.set('1-2', (ratingsMap.get('1-2') || 0) + 1);
     });
 
-    // Extract citations for grounding
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
     const groundingLinks = groundingChunks
       .filter(chunk => chunk.maps)
