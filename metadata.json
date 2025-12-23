@@ -1,0 +1,7 @@
+{
+  "name": "GeoBiz Intelligence Explorer",
+  "description": "An advanced business activity and industry analyzer using Gemini Maps Grounding for real-time market insights and smart industry mapping.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
