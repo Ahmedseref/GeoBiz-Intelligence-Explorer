@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Layout } from './components/Layout';
 import { SearchBar } from './components/SearchBar';
 import { Analytics } from './components/Analytics';
@@ -13,6 +13,8 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<SearchResponse | null>(null);
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | undefined>();
+  const [mapFocus, setMapFocus] = useState<{ lat: number; lng: number } | undefined>();
+  const mapSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -34,6 +36,22 @@ const App: React.FC = () => {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLocate = (lat: number, lng: number) => {
+    setMapFocus({ lat, lng });
+    if (mapSectionRef.current) {
+      const offset = 80;
+      const bodyRect = document.body.getBoundingClientRect().top;
+      const elementRect = mapSectionRef.current.getBoundingClientRect().top;
+      const elementPosition = elementRect - bodyRect;
+      const offsetPosition = elementPosition - offset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
     }
   };
 
@@ -105,7 +123,7 @@ const App: React.FC = () => {
           <Analytics data={data.analytics} />
           
           {/* Interactive Geographic & Industry Explorer (Map View) */}
-          <div className="space-y-8">
+          <div className="space-y-8" ref={mapSectionRef}>
             <h3 className="text-2xl font-black text-slate-900 flex items-center gap-4">
               <div className="bg-indigo-600 p-2.5 rounded-2xl shadow-xl shadow-indigo-100">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -116,7 +134,8 @@ const App: React.FC = () => {
             </h3>
             <IndustryExplorer 
               businesses={data.businesses} 
-              center={location ? { lat: location.latitude, lng: location.longitude } : undefined} 
+              center={mapFocus || (location ? { lat: location.latitude, lng: location.longitude } : undefined)} 
+              onLocate={handleLocate}
             />
           </div>
 
@@ -136,7 +155,10 @@ const App: React.FC = () => {
               </span>
             </div>
             <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
-              <BusinessTable businesses={data.businesses} />
+              <BusinessTable 
+                businesses={data.businesses} 
+                onLocate={handleLocate}
+              />
             </div>
           </div>
         </div>

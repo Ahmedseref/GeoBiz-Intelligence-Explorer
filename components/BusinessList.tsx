@@ -4,9 +4,10 @@ import { Business } from '../types';
 
 interface BusinessListProps {
   businesses: Business[];
+  onLocate?: (lat: number, lng: number) => void;
 }
 
-export const BusinessList: React.FC<BusinessListProps> = ({ businesses }) => {
+export const BusinessList: React.FC<BusinessListProps> = ({ businesses, onLocate }) => {
   if (businesses.length === 0) return null;
 
   return (
@@ -20,10 +21,21 @@ export const BusinessList: React.FC<BusinessListProps> = ({ businesses }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {businesses.map((biz) => (
           <div key={biz.id} className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group flex flex-col h-full">
-            <div className="absolute top-0 right-0 p-3">
+            <div className="absolute top-0 right-0 p-3 flex flex-col items-end gap-2">
                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
                 {biz.industry}
               </span>
+              {onLocate && (
+                <button 
+                  onClick={() => onLocate(biz.location.lat, biz.location.lng)}
+                  className="p-2 bg-white rounded-full border border-slate-200 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                  title="Locate on map"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  </svg>
+                </button>
+              )}
             </div>
             
             <h4 className="text-lg font-bold text-slate-900 pr-20 group-hover:text-blue-600 transition-colors">

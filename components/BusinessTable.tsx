@@ -4,9 +4,10 @@ import { Business } from '../types';
 
 interface BusinessTableProps {
   businesses: Business[];
+  onLocate?: (lat: number, lng: number) => void;
 }
 
-export const BusinessTable: React.FC<BusinessTableProps> = ({ businesses }) => {
+export const BusinessTable: React.FC<BusinessTableProps> = ({ businesses, onLocate }) => {
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
   const toggleExpand = (id: string) => {
@@ -120,17 +121,29 @@ export const BusinessTable: React.FC<BusinessTableProps> = ({ businesses }) => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end gap-3">
+                    <div className="flex items-center justify-end gap-2">
+                      {onLocate && (
+                        <button 
+                          onClick={() => onLocate(biz.location.lat, biz.location.lng)}
+                          className="inline-flex items-center gap-1 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-600 px-3 py-1.5 rounded-lg border border-blue-200 transition-all font-bold text-xs"
+                          title="Center Map on this Business"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          </svg>
+                          Locate
+                        </button>
+                      )}
                       <a 
                         href={getMapsUrl(biz)} 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="inline-flex items-center gap-1 bg-slate-50 hover:bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg border border-slate-200 transition-all font-bold text-xs"
+                        className="inline-flex items-center gap-1 bg-slate-50 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 transition-all font-bold text-xs"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
-                        Maps
+                        External
                       </a>
                     </div>
                   </td>

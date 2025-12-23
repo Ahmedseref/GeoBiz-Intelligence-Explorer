@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Business } from '../types';
 import { BusinessList } from './BusinessList';
 import { MapView } from './MapView';
@@ -7,14 +7,16 @@ import { MapView } from './MapView';
 interface IndustryExplorerProps {
   businesses: Business[];
   center?: { lat: number; lng: number };
+  onLocate?: (lat: number, lng: number) => void;
 }
 
 type ViewMode = 'grid' | 'map';
 
-export const IndustryExplorer: React.FC<IndustryExplorerProps> = ({ businesses, center }) => {
+export const IndustryExplorer: React.FC<IndustryExplorerProps> = ({ businesses, center, onLocate }) => {
   const [selectedIndustry, setSelectedIndustry] = useState<string>('All');
   const [viewMode, setViewMode] = useState<ViewMode>('map');
 
+  // Group businesses by industry and memoize the results
   const groupedBusinesses = useMemo(() => {
     const groups: Record<string, Business[]> = { 'All': businesses };
     businesses.forEach((biz) => {
@@ -26,26 +28,50 @@ export const IndustryExplorer: React.FC<IndustryExplorerProps> = ({ businesses, 
   }, [businesses]);
 
   const industries = useMemo(() => Object.keys(groupedBusinesses).sort(), [groupedBusinesses]);
+  
+  // Update viewable businesses based on filter
   const currentBusinesses = useMemo(() => groupedBusinesses[selectedIndustry] || [], [groupedBusinesses, selectedIndustry]);
+
+  // If a global center focus is triggered (e.g. from the table), 
+  // we ensure the industry filter doesn't hide the focused business.
+  useEffect(() => {
+    if (center && center.lat !== 0) {
+      // Check if the focused business is in the current industry. 
+      // If not, default to 'All' to ensure visibility.
+      const isVisible = currentBusinesses.some(b => 
+        Math.abs(b.location.lat - center.lat) < 0.0001 && 
+        Math.abs(b.location.lng - center.lng) < 0.0001
+      );
+      
+      if (!isVisible && selectedIndustry !== 'All') {
+        setSelectedIndustry('All');
+      }
+    }
+  }, [center]);
 
   return (
     <div className="space-y-6">
       <div className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3 overflow-x-auto pb-2 md:pb-0 scrollbar-hide flex-1">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Filter Industry:</span>
+          <div className="flex items-center gap-2 mr-2">
+            <div className="w-1 h-6 bg-blue-600 rounded-full"></div>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Filter Industry</span>
+          </div>
           {industries.map((industry) => (
             <button
               key={industry}
               onClick={() => setSelectedIndustry(industry)}
-              className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap border-2 flex items-center gap-2 ${
+              className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap border-2 flex items-center gap-2 group ${
                 selectedIndustry === industry
-                  ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200 scale-105'
-                  : 'bg-slate-50 border-slate-100 text-slate-600 hover:bg-slate-100'
+                  ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200 scale-105 z-10'
+                  : 'bg-slate-50 border-slate-100 text-slate-600 hover:bg-slate-100 hover:border-slate-200'
               }`}
             >
               {industry} 
-              <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-black ${
-                selectedIndustry === industry ? 'bg-white text-blue-600' : 'bg-slate-200 text-slate-500'
+              <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black transition-colors ${
+                selectedIndustry === industry 
+                  ? 'bg-white text-blue-600' 
+                  : 'bg-slate-200 text-slate-500 group-hover:bg-slate-300'
               }`}>
                 {groupedBusinesses[industry].length}
               </span>
@@ -77,17 +103,17 @@ export const IndustryExplorer: React.FC<IndustryExplorerProps> = ({ businesses, 
 
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
         {viewMode === 'map' ? (
-          <div className="bg-white p-3 rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
-            <MapView businesses={currentBusinesses} center={selectedIndustry === 'All' ? center : undefined} />
-            <div className="px-4 py-2">
+          <div className="bg-white p-3 rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden ring-1 ring-slate-100">
+            <MapView businesses={currentBusinesses} center={center} />
+            <div className="px-4 py-2 bg-slate-50 border-t border-slate-100 -mx-3 -mb-3 rounded-b-[2.5rem]">
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-center">
-                Visualizing {selectedIndustry === 'All' ? 'Complete Market' : `${selectedIndustry} Industry`} Ecosystem
+                Displaying {currentBusinesses.length} {selectedIndustry === 'All' ? 'Entities Across All Industries' : `${selectedIndustry} Providers`}
               </p>
             </div>
           </div>
         ) : (
           <div className="animate-in zoom-in-95 duration-300">
-            <BusinessList businesses={currentBusinesses} />
+            <BusinessList businesses={currentBusinesses} onLocate={onLocate} />
           </div>
         )}
       </div>
